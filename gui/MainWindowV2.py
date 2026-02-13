@@ -6,10 +6,10 @@ from scrap.allegrolokalnie import AllegroLokalnieItem
 
 
 
-class MainWindow(QMainWindow):
+class MainWindowV2(QMainWindow):
     def __init__(self, items: list[AllegroLokalnieItem]):
         super().__init__()
-        self.setWindowTitle("Hello, World!")
+        self.setWindowTitle("Crocoradar")
         #self.resize(800, 600)
         self.ad_details = AdDetails()
         tree_view = AdTreeView(items=items, details=self.ad_details)

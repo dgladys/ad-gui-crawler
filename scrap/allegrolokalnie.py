@@ -35,6 +35,11 @@ class AllegroLokalnieItem:
         return self.item.find("span", {"class": "ml-offer-price__dollars"}).text.replace(" ", "")
     def get_price_currency(self):
         return self.item.find("span", {"class": "ml-offer-price__currency"}).text
+
+    def get_full_price(self) -> str:
+        return (self.get_price() + " " + self.get_price_currency()).strip()
+
+
     def get_image(self):
         return self.item.find("img")["src"]
 

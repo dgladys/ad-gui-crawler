@@ -1,5 +1,5 @@
 import requests
-from PyQt6.QtWidgets import QLabel, QApplication, QSizePolicy
+from PyQt6.QtWidgets import QLabel
 from PyQt6.QtGui import QPixmap, QImage
 
 
@@ -9,23 +9,27 @@ class ExternalImage(QLabel):
         super().__init__()
         self.load_from_url(url)
 
-    def load_from_url(self, url_path: str):
+    def __create_pixmap(self, image: QImage = None, width: int = 320, height: int = 240):
+
+        pix_map = QPixmap.fromImage(image) if image is not None else QPixmap()
+        if width is not None and height is not None:
+            pix_map = QPixmap.fromImage(image).scaled(width, height)
+        return pix_map
+
+    def create_empty(self, width: int = 320, height: int = 240):
+        return self.__create_pixmap(width=width, height=height)
+
+    def load_from_url(self, url_path: str, width: int = 320, height: int = 240):
         try:
             response = requests.get(url_path)
             image_data = response.content
             image = QImage()
             image.loadFromData(image_data)
-            self.setPixmap(QPixmap.fromImage(image))
-            self.setScaledContents(True)
-            self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored )
+
+            pix_map = self.__create_pixmap(image, width, height)
+            self.setPixmap(pix_map)
         except Exception as e:
             print("Error during loading image")
             return False
         return True
 
-
-class ImageFactory:
-
-    @staticmethod
-    def create_from_url(url_path: str) -> ExternalImage:
-        return ExternalImage(url_path)
