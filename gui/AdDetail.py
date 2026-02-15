@@ -1,5 +1,5 @@
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QColor, QDesktopServices
 from PyQt6.QtWidgets import QSplitter, QLabel, QPushButton, QGridLayout, QWidget
 
 from gui.Image import ExternalImage
@@ -16,6 +16,14 @@ class ASplitter(QSplitter):
         self.setStyleSheet("#AdDescription{background-color: "+color+";}")
 
 class AdDescription(QWidget):
+
+    def __create_bold_label(self, text):
+        label = QLabel(text)
+        font = label.font()
+        font.setBold(True)
+        label.setFont(font)
+        return label
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -27,22 +35,32 @@ class AdDescription(QWidget):
         #Items
         self.gridLayout = QGridLayout()
 
+        self.titleLabel = self.__create_bold_label("Tytuł")
+        self.descriptionLabel = self.__create_bold_label("Cos")
+        self.priceLabel = self.__create_bold_label("Cena")
+        self.urlLabel = self.__create_bold_label("URL")
+
 
         self.title = QLabel()
         self.description = QLabel()
         self.price = QLabel()
         self.url = QLabel()
-        self.button = QPushButton()
-        self.button.setText("Otwórz w przeglądarce")
+        self.button = QPushButton("Otwórz w przeglądarce", self)
 
-        self.gridLayout.addWidget(self.title, 0, 0)
-        self.gridLayout.addWidget(self.description, 1, 0)
-        self.gridLayout.addWidget(self.price, 2, 0)
-        self.gridLayout.addWidget(self.url, 3, 0)
-        self.gridLayout.addWidget(self.button, 4, 0)
+        self.gridLayout.addWidget(self.titleLabel, 0, 0)
+        self.gridLayout.addWidget(self.descriptionLabel, 1, 0)
+        self.gridLayout.addWidget(self.priceLabel, 2, 0)
+        self.gridLayout.addWidget(self.urlLabel, 3, 0)
+
+
+        self.gridLayout.addWidget(self.title, 0, 1)
+        self.gridLayout.addWidget(self.description, 1, 1)
+        self.gridLayout.addWidget(self.price, 2, 1)
+        self.gridLayout.addWidget(self.url, 3, 1)
+        self.gridLayout.addWidget(self.button, 4, 0, 1, 2)
         #self.gridLayout.addWidget(self.button, 1, 0, 1, 2)
-
         self.setLayout(self.gridLayout)
+        self.button.clicked.connect(lambda p: self.on_button_pressed(p))
 
 
 
@@ -55,6 +73,9 @@ class AdDescription(QWidget):
             self.description.setText(ad.get_full_price())
             self.price.setText(ad.get_full_price())
             self.url.setText(ad.get_link())
+
+    def on_button_pressed(self, button):
+        QDesktopServices.openUrl(QUrl(self.ad.get_link()))
 
 
 class AdDetails(ASplitter):

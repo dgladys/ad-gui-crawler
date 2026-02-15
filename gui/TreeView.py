@@ -55,4 +55,7 @@ class AdTreeView(QTreeView):
         ad: AllegroLokalnieItem = selected_croco.get_ad_item()
         if self.details is not None and ad is not None:
             self.details.set_ad(ad)
+            self.details.setVisible(True)
+        else:
+            self.details.setVisible(False)
 

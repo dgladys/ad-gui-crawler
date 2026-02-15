@@ -1,4 +1,5 @@
 # This is a sample Python script.
+import json
 
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
@@ -6,7 +7,9 @@ from helpers.uri import get_uri_params
 from scrap.allegrolokalnie import AllegroLokalniePage, AllegroLokalnieItem
 import sys
 from helpers.file.fileinfo import FileInfo, FileDeprecation
-from gui.MainWindow import MainWindow, main
+from gui.MainWindowV2 import MainWindow, main
+from scrap.olx.OlxScrapper import OlxScrapper
+
 
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
@@ -15,6 +18,16 @@ def print_hi(name):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+
+
+    scrapper = OlxScrapper(debug=False)
+    sr = scrapper.scrap("https://www.olx.pl/dla-dzieci/zabawki/maskotki/q-krokodyl/?search%5Border%5D=created_at:desc")
+    #print(sr.PRERENDERED_STATE["listing"]["listing"])
+    with open('prerendered_data.json', 'w', encoding="utf-8") as f:
+        json.dump(sr.PRERENDERED_STATE["listing"]["listing"], f, indent=4)
+        #json.dump(sr.PRERENDERED_STATE, sys.stdout, indent=4)
+
+    sys.exit()
 
     cache_file = "cache/bc3c23aaf5319a0c83c4bacadc06665e"
     fi = FileInfo(cache_file)
