@@ -1,6 +1,9 @@
 import os
 from helpers.md5 import md5_string_hash
 
+class CacheUnreadableException(Exception):
+    pass
+
 class Cache:
     def __init__(self):
         self.directory = "cache"
@@ -14,7 +17,12 @@ class Cache:
         if not self.is_url_cached(url):
             return None
         hash_string = md5_string_hash(url)
-        return open(os.path.join(self.directory, hash_string), 'r', encoding="utf-8").read()
+        cache_file_path = os.path.join(self.directory, hash_string)
+        try:
+            return open(cache_file_path, 'r', encoding="utf-8").read()
+        except Exception as e:
+            raise CacheUnreadableException("Cannot read cache file: {}".format(cache_file_path)) from e
+
     def remove_cache(self, url):
         hash_string = md5_string_hash(url)
         if self.is_url_cached(url):

@@ -1,4 +1,6 @@
-from bs4 import BeautifulSoup, Tag
+import json
+
+from bs4 import BeautifulSoup, Tag, ResultSet
 from typing import Self
 import sys
 
@@ -53,6 +55,8 @@ class AllegroLokalnieItem:
 
     def get_badges(self):
         badges = self.find_by_class("ul", "ml-badges ml-badges mlc-itembox__badges__badge")
+        if badges is None:
+            return []
         return badges.find_all("li")
 
     def get_badge_starts_with(self, search_text):
@@ -65,6 +69,17 @@ class AllegroLokalnieItem:
     def get_product_state(self):
         return self.get_badge_starts_with("STAN: ")
         #return self.item.find("ul", {"class": "ml-badges ml-badges mlc-itembox__badges__badge"})
+
+    def to_dict(self):
+        return {
+            "title": self.get_title(),
+            "price": self.get_price(),
+            "currency": self.get_price_currency(),
+            "link": self.get_link(),
+            "image": self.get_image(),
+            "address": self.get_address(),
+            "product_state": self.get_product_state(),
+        }
 
 class AllegroLokalniePage(BasePage):
 
@@ -90,6 +105,13 @@ class AllegroLokalniePage(BasePage):
             pages_count = pages_count[2:]
         return int(pages_count)
 
+    def _get_items(self) -> ResultSet[Tag]:
+        return self.parsed_content.find_all("a", {"class": "mlc-card mlc-itembox"})
+
     def get_items(self):
-        items = self.parsed_content.find_all("a", {"class": "mlc-card mlc-itembox"})
+        items = self._get_items()
         return map(lambda item: AllegroLokalnieItem(item), items)
+
+    def to_dict(self):
+        items = self.get_items()
+        return [item.to_dict() for item in items]

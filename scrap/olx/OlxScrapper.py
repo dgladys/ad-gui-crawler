@@ -30,12 +30,12 @@ class OlxLink:
         return self.query_params
     def get_page_number(self) -> int:
         if "page" in self.query_params:
-            return int(self.get_single_value(self.query_params["page"]))
+            return int(OlxLink.get_single_value(self.query_params["page"]))
         return 1
     def get_next_page_url(self) -> str:
         url = self.base_url + self.path
         qp = self.query_params
-        qp["page"] = self.get_page_number() + 1
+        qp["page"] = self.get_page_number()+1
         qp_encoded = urlencode(qp)
         if len(qp_encoded) > 0:
             url += "?" + qp_encoded
@@ -158,14 +158,17 @@ class OlxAdsCollection:
     def __init__(self, ads):
         self.ads = ads
 
-    def count(self):
+    def count(self) -> int:
         return len(self.ads)
 
-    def get_ad(self, index):
-        return OlxAd(self.ads[index])
+    def get_ad(self, index) -> OlxAd:
+        return OlxAd(self.ads[index]) if index in self.ads else None
+    def get_ads(self):
+        return [OlxAd(ad) for ad in self.ads]
 
 class OlxScrapResult:
-    def __init__(self, data: dict):
+    def __init__(self, data: dict, link: OlxLink):
+        self._link = link
         self.PRERENDERED_STATE = data["PRERENDERED_STATE"]
         self.PAGE_TRANSLATIONS = data["PAGE_TRANSLATIONS"]
         self.SELECTED_LANGUAGE_ISO_CODE = data["SELECTED_LANGUAGE_ISO_CODE"]
@@ -173,6 +176,7 @@ class OlxScrapResult:
     def get_listing(self):
         return self.PRERENDERED_STATE["listing"]["listing"]
 
+    # Page number counts starting from 0, if query param page=1, then here 0
     def get_page_number(self) -> int:
         return self.get_listing()["pageNumber"]
     def get_total_elements(self):
@@ -181,10 +185,35 @@ class OlxScrapResult:
         return self.get_listing()["visibleElements"]
     def get_total_pages(self):
         return self.get_listing()["totalPages"]
-    def get_ads(self):
+    def get_ads(self) -> OlxAdsCollection:
+        return OlxAdsCollection(self.get_raw_ads())
+    def get_raw_ads(self):
         return self.get_listing()["ads"]
+    def has_next_page(self):
+        return (self.get_page_number()+1) < self.get_total_pages()
+    def get_next_page_url(self):
+        if not self.has_next_page():
+            return None
+        return self._link.get_next_page_url()
 
 
+class OlxResultPages:
+    def __init__(self, pages: list[OlxScrapResult], first_url: str):
+        self._pages = pages
+        self._first_url = first_url
+
+    def get_pages(self):
+        return self._pages
+    def get_first_url(self):
+        return self._first_url
+    def get_all_raw_ads(self):
+        result = []
+        for page in self._pages:
+            result.extend(page.get_raw_ads())
+        return result
+    def get_all_ads(self):
+        raw_ads = self.get_all_raw_ads()
+        return [OlxAd(ad) for ad in raw_ads]
 
 class OlxScrapper:
 
@@ -193,20 +222,33 @@ class OlxScrapper:
 
     def scrap(self, url: str):
         link = OlxLink(url)
-        print(link.get_page_number())
-        print(link.get_next_page_url())
         if not link.is_valid():
             raise InvalidOLXLink("Invalid URL")
         cache = Cache()
 
         if cache.is_url_cached(url):
-            resp = cache.read_cache(url)
+            html_content = cache.read_cache(url)
         else:
-            resp = requests.get(url).text
-            cache.write_cache(url, resp)
+            html_content = requests.get(url).text
+            cache.write_cache(url, html_content)
         if self.debug:
-            print(resp)
-        r = ScriptRegex()
-        c = r.find_olx_data(resp)
-        return OlxScrapResult(c)
+            print(html_content)
+        content = ScriptRegex().find_olx_data(html_content)
+        return OlxScrapResult(content, link)
 
+    def scrap_all_pages(self, url: str):
+        pages = []
+        first_url = url
+        while True:
+            try:
+                sr = self.scrap(url)
+                pages.append(sr)
+                if sr.has_next_page():
+                    url = sr.get_next_page_url()
+                else:
+                    break
+            except InvalidOLXLink:
+                print("Invalid URL: {}".format(url))
+
+
+        return OlxResultPages(pages, first_url)
