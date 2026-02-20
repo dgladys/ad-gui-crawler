@@ -59,7 +59,6 @@ class FileDeprecation:
 
     def is_deprecated(self, file_path):
         file_info = FileInfo(file_path)
-        print(file_info.get_file_path())
         return file_info.how_long_exists() > self.deprecation_seconds
 
     # Remove file if deprecated
