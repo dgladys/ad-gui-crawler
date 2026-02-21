@@ -23,7 +23,6 @@ class AllegroLokalnieItem:
         try:
             return int(self.get_price())
         except Exception as e:
-            print(e)
             return 0
 
     def get_link(self):

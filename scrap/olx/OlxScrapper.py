@@ -248,7 +248,8 @@ class OlxScrapper:
                 else:
                     break
             except InvalidOLXLink:
-                print("Invalid URL: {}".format(url))
+                if self.debug:
+                    print("Invalid URL: {}".format(url))
 
 
         return OlxResultPages(pages, first_url)
